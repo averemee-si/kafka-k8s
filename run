@@ -1,0 +1,22 @@
+#! /bin/bash
+
+if [ ! -z "$REPLICAS" ]; then
+  HOSTNAME_PATTERN=`echo "${HOSTNAME}" | cut -d'-' -f 1`
+  KAFKA_NODE_ID=`echo "${HOSTNAME}" | rev | cut -d'-' -f 1 | rev`
+  DOMAIN_NAME=`hostname -d`
+  NUM=0
+  KAFKA_CONTROLLER_QUORUM_VOTERS=""
+  while [ "$NUM" -lt "$REPLICAS" ]; do
+    VOTER="${NUM}@${HOSTNAME_PATTERN}-${NUM}.${DOMAIN_NAME}:9093"
+    if [ "$NUM" -gt "0" ]; then
+      KAFKA_CONTROLLER_QUORUM_VOTERS="$KAFKA_CONTROLLER_QUORUM_VOTERS,"
+    fi
+    KAFKA_CONTROLLER_QUORUM_VOTERS="${KAFKA_CONTROLLER_QUORUM_VOTERS}${VOTER}"
+    NUM=$((NUM+1))
+  done
+  export KAFKA_NODE_ID KAFKA_CONTROLLER_QUORUM_VOTERS
+  echo "Kafka node.id is set to ${KAFKA_NODE_ID}"
+  echo "Kafka controller.quorum.voters is set to ${KAFKA_CONTROLLER_QUORUM_VOTERS}"
+fi
+
+/etc/kafka/docker/run
